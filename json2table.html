@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.js"></script>
+    <style>
+        input[type=text], textarea {
+            outline: none;
+            padding: 10px;
+            border: 1px solid #ddd;
+            width:80%;
+            display:block;
+            margin:0 auto;
+        }
+
+        input[type=text]:focus, textarea:focus {
+            box-shadow: 0 0 5px rgb(0, 0, 0);
+            padding: 10px;
+            border: 1px solid rgb(0, 0, 0);
+            width:80%;
+            display:block;
+            margin:0 auto;
+        }
+        .center{
+            display:block;
+            margin:0 auto;
+        }
+        th, td {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+<textarea cols="100" rows="18" name="textarea" placeholder="请输入json数组,例如[{one:'一行一列',two:'一行二列'},{one:'二行一列',two:'二行二列'}]" id="jsonStr" onchange="jsonChange()">
+</textarea>
+<br />
+<div class="select_button"></div>
+<p style="text-align: center">
+    合并数组内的对象，超过 <input style="width: 50px;display: inline-block"  id="arrToObjLength" type="number" min="1" onchange="lengthChange()"> 项时合并（默认为5）
+</p>
+
+<button class="center" onclick="confirm()">确定</button>
+<br>
+<button class="left" onclick="copyTable()">点击复制表格</button>
+<div class="table_wrapper" id="table_wrapper">
+</div>
+</body>
+<script>
+    let arrToObjLength = 5;
+    function lengthChange(){
+        arrToObjLength = $('#arrToObjLength').val();
+        confirm()
+    }
+    function jsonChange(){
+        confirm()
+    }
+
+    function jsonToTable(data,isArrToObj) {
+        let state = ''
+        let html = ''
+        if (data.constructor === Object){
+            for (const a in data) {
+                let str = JSON.stringify(data[a])
+                str = str.replace(/"/g, '&quot;');
+                if (!isArrToObj){
+                    html += '<tr>'
+                    html +='<th onClick = "confirm('+ str+',\''+a.toString() +'\')">'+a+'</th>'
+                }
+                html += jsonToTable(data[a])
+            }
+            html += '<tr>';
+        }else if (data.constructor === Array){
+            let str = JSON.stringify(data)
+            html += '<tr>';
+            let objName = []
+            for (const a in data) {
+                let innerName = []
+                for (const b in data[a]){
+                    innerName.push(b)
+                }
+                objName.push(innerName)
+            }
+            let arrToObj = array  => array.every(el => JSON.stringify(el) === JSON.stringify(array [0]))
+            if (arrToObj(objName)&&objName.length>arrToObjLength &&objName[0].length>0) {
+                for(i=0;i<objName[0].length;i++){
+                    html +=`<th>${objName[0][i]}</th>`
+                }
+                html += '<tr>'
+                state = true
+            }else{
+                html += '<tr>'
+                state = false
+            }
+            // html += '<tr>';
+            for (const a in data) {
+                html += jsonToTable(data[a],state)
+            }
+        }
+        else{
+            if(!isArrToObj){
+                html += `<td>${data}</td>`
+            }else{
+                html += `<td>${data}</td><tr>`;
+            }
+        }
+        return html;
+    }
+    //复制表格
+    function copyTable(){
+         var div = document.getElementById('table_wrapper');
+         if (document.body.createTextRange) {
+             var range = document.body.createTextRange();
+             range.moveToElementText(div);
+             range.select();
+         } else if (window.getSelection) {
+             var selection = window.getSelection();
+             var range = document.createRange();
+             range.selectNodeContents(div);
+             selection.removeAllRanges();
+             selection.addRange(range);
+         } else {
+             console.warn("none");
+         }
+         document.execCommand("Copy"); // 执行浏览器复制命令
+     }
+    function confirm(data){
+        var jsonStr = document.getElementById("jsonStr").value;
+        isJsonString(jsonStr)
+        var jsonObj = eval ("(" + jsonStr + ")");
+        var option={opt:jsonObj};
+        if (data){
+            console.log(data);
+            let aArr = []
+            for (var a in data){
+                aArr = []
+                for (var b in data[a]){
+                    console.log(b);
+                    aArr.push(b)
+                }
+            }
+            console.log(aArr);
+            for (var a in data){
+                aArr = []
+                for (var b in data[a]){
+                    console.log(b);
+                    aArr.push(b)
+                }
+            }
+            $('.table_wrapper').html( '<table>'+jsonToTable(data)+'</table>')
+        }else{
+            $('.table_wrapper').html( '<table>'+jsonToTable(option.opt)+'</table>')
+        }
+
+    }
+    //判断json格式
+    function isJsonString(str) {
+        try {
+            if (typeof JSON.parse(str) == "object") {
+                return true;
+            }
+        } catch (e) {
+            alert('JSON数据格式有误')
+        }
+        return false;
+    }
+</script>
+</html>
